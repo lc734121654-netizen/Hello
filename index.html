@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
+    <title>潮汕牛肉 (手机优化)</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <style>
+        /* CSS starts here */
+        html, body {
+            height: 100%; /* Ensure html and body take full viewport height */
+            min-height: 100%;
+            margin: 0;
+            padding: 0; /* Remove padding from html/body to prevent scrollbars */
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start; /* Align to the top of the container. */
+            background-color: #f4f4f4;
+            margin: 0; /* Remove default body margin */
+            padding: 10px; /* Add a small padding to the body for edge spacing around the receipt */
+            box-sizing: border-box; /* Include padding and border in the element's total width and height */
+            width: 100vw; /* Ensure body takes full viewport width */
+            overflow-x: hidden; /* Prevent horizontal scroll */
+            overflow-y: auto; /* Allow vertical scrolling if content exceeds height */
+        }
+
+        .receipt-container {
+            width: 100%; /* Make it take full width */
+            background-color: #fff;
+            border: 1px solid #ccc;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            padding: 15px; /* Slightly reduced padding for mobile */
+            box-sizing: border-box;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 15px; /* Reduced margin */
+        }
+
+        .header h1 {
+            font-size: 1.8em; /* Slightly smaller font for mobile header */
+            margin: 0;
+            padding-bottom: 8px; /* Reduced padding */
+            border-bottom: 2px solid #333;
+        }
+
+        .info-row {
+            padding: 6px 0; /* Reduced padding */
+            border-bottom: 1px solid #eee;
+            font-size: 0.9em; /* Slightly smaller font for info rows */
+            display: flex; /* Use flexbox for alignment */
+            align-items: center; /* Vertically align items */
+            justify-content: flex-start; /* Align content to the start */
+            /* Added padding-left/right to match table cells for visual alignment */
+            padding-left: 5px;
+            padding-right: 5px;
+        }
+
+        .info-row span:first-child { /* Targets "日期：" and "客户：" labels */
+            margin-right: 5px; /* Space between label and input */
+            width: 50px; /* Keep labels a fixed width for alignment */
+            flex-shrink: 0; /* Prevent label from shrinking */
+            text-align: left;
+        }
+
+        /* Rule to adjust width and remove borders from date and text inputs in info-row */
+        .info-row input[type="text"] {
+            flex-grow: 1; /* Allow to take full available space for date/customer inputs */
+            max-width: none; /* Remove max-width to allow full growth */
+            padding: 5px; /* Restore padding to match table inputs more closely */
+            border: none; /* No border for these inputs */
+            background-color: transparent; /* Ensure background is transparent */
+            border-radius: 0; /* Remove border-radius */
+            font-size: 0.95em;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+        }
+
+        /* Flatpickr input and icon styling for borderless, plain appearance */
+        .flatpickr-input {
+            border: none !important; /* Force no border */
+            background-color: transparent !important; /* Force transparent background */
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            /* Adjust padding to not conflict with our desired borderless look */
+            padding: 5px !important; /* Ensure consistent padding with other info-row inputs */
+            box-sizing: border-box; /* Crucial for padding to be included in width */
+            text-align: left; /* Ensure text aligns left */
+        }
+
+        /* Flatpickr calendar popup styling (kept for functionality) */
+        .flatpickr-calendar {
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            border: 1px solid #ccc;
+        }
+
+        /* Flatpickr internal elements to ensure no unwanted borders/backgrounds */
+        .flatpickr-wrapper {
+            display: flex;
+            flex-grow: 1;
+            max-width: none;
+            border: none !important;
+            background: transparent !important;
+        }
+
+
+        .info-row:last-of-type {
+            margin-bottom: 10px; /* Reduced margin */
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 10px; /* Reduced margin */
+        }
+
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+
+        th, td {
+            padding: 0; /* Remove default padding from cells to let input control it */
+            text-align: left;
+            word-break: break-word; /* 允许单元格内容在必要时换行 */
+        }
+
+        /* Inputs inside table cells should fill their container and have internal padding */
+        td input[type="text"],
+        td input[type="number"] {
+            width: 100%; /* Make inputs fill the cell */
+            padding: 6px 5px; /* Inner padding for inputs */
+            border: none; /* Remove input border */
+            box-sizing: border-box; /* Include padding in the element's total width */
+            font-size: 0.9em; /* Slightly smaller font for table inputs */
+            background: transparent; /* Make input background transparent */
+            min-width: 0; /* 尝试将输入框的最小宽度设置为0，允许其尽可能缩小 */
+        }
+
+        td input[readonly] {
+            background-color: #f8f8f8; /* Light gray background for readonly fields */
+            cursor: not-allowed;
+        }
+
+
+        thead th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+            padding: 8px; /* Reduced padding */
+            font-size: 0.9em; /* Smaller font for table headers */
+        }
+
+        tbody tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        /* New styles for add/delete functionality */
+        .add-row-button {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            margin-top: 10px;
+            background-color: #5cb85c;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1em;
+            box-sizing: border-box;
+        }
+        
+        /* 替换删除按钮为图标（叉号）的新样式 */
+        .delete-row-button {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%; /* 填充单元格 */
+            height: 100%;
+            padding: 0; /* 移除内边距 */
+            background-color: transparent; /* 透明背景 */
+            color: #d9534f; /* 红色图标 */
+            border: none;
+            cursor: pointer;
+            font-size: 1.5em; /* 放大叉号图标 */
+            line-height: 1;
+            box-sizing: border-box;
+        }
+
+        /* 调整操作列的宽度，使其更紧凑 */
+        th:last-child {
+            width: 5%; /* 占用很小的宽度 */
+            min-width: 30px; /* 确保一个最小可点击宽度 */
+            max-width: 40px;
+        }
+        
+        td:last-child {
+            padding: 0; /* 移除单元格内边距，让按钮紧贴边界 */
+            text-align: center;
+        }
+        /* End of new styles */
+
+        .summary-row {
+            text-align: right;
+            padding: 6px 5px; /* Add padding to match table cells */
+            font-size: 1em; /* Slightly smaller font */
+            font-weight: bold;
+        }
+
+        .due-row {
+            border-top: 2px solid #5cb85c; /* Green border for "应收" */
+            margin-top: 10px; /* Reduced margin */
+            padding-top: 10px; /* Reduced padding */
+            color: #333;
+        }
+
+        .owed-row {
+            border-top: 1px solid #eee; /* Light border for "挂账" */
+            padding-top: 6px; /* Reduced padding */
+            color: #555;
+            font-size: 0.9em; /* Slightly smaller font */
+            font-weight: normal;
+        }
+        /* CSS ends here */
+    </style>
+</head>
+<body>
+    <div class="receipt-container">
+        <div class="header">
+            <h1>潮汕牛肉</h1>
+        </div>
+        <div class="info-row">
+            <span>日期：</span>
+            <input type="text" id="receiptDate" value="">
+        </div>
+        <div class="info-row">
+            <span>客户：</span>
+            <input type="text" id="customerName" value="2店">
+        </div>
+        <div style="overflow-x: auto;">
+            <table id="itemsTable">
+                <thead>
+                    <tr>
+                        <th>品名</th>
+                        <th>数量(斤)</th>
+                        <th>单价</th>
+                        <th>金额</th>
+                        <th>操作</th> </tr>
+                </thead>
+                <tbody>
+                    <tr class="item-row">
+                        <td><input type="text" class="item-name" value="顶级雪花"></td>
+                        <td><input type="number" class="item-quantity" value="5" min="0"></td>
+                        <td><input type="number" class="item-unit-price" value="175" min="0"></td>
+                        <td><input type="number" class="item-amount" value="875.00" readonly></td>
+                        <td><button type="button" class="delete-row-button">&times;</button></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <button type="button" id="addRowButton" class="add-row-button">添加品项</button>
+
+        <div class="summary-row due-row">
+            <span>应收：<span id="amountDue">875.00</span></span>
+        </div>
+        <div class="summary-row owed-row">
+            <span>挂账：<span id="amountOwed">875.00</span></span>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/zh.js"></script>
+
+    <script>
+        /* JavaScript starts here */
+        // 尝试阻止多指触控缩放
+        document.addEventListener('touchstart', function(event) {
+            if (event.touches.length > 1) {
+                // event.preventDefault(); // 暂时注释，以免影响正常滚动
+            }
+        }, { passive: false });
+
+        document.addEventListener('touchmove', function(event) {
+            if (event.touches.length > 1) {
+                // event.preventDefault(); // 暂时注释，以免影响正常滚动
+            }
+        }, { passive: false });
+
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const receiptDateInput = document.getElementById('receiptDate');
+            const itemsTableBody = document.querySelector('#itemsTable tbody');
+            const addRowButton = document.getElementById('addRowButton');
+            const amountDueSpan = document.getElementById('amountDue');
+            const amountOwedSpan = document.getElementById('amountOwed');
+
+
+            // Calculate tomorrow's date
+            const today = new Date();
+            const tomorrow = new Date(today);
+            tomorrow.setDate(today.getDate() + 1); // Adds one day to the current date
+
+            // Initialize Flatpickr for the date input
+            flatpickr(receiptDateInput, {
+                dateFormat: "Y年n月j日", // "YYYY年M月D日" format
+                locale: "zh", // Use Chinese locale for "年", "月", "日"
+                defaultDate: tomorrow, // Set default date to tomorrow's date object
+                wrap: false
+            });
+
+
+            // Function to calculate and update amounts
+            function updateAmounts() {
+                let totalAmount = 0;
+                // Get all current item rows
+                const itemRows = itemsTableBody.querySelectorAll('.item-row');
+
+                itemRows.forEach(row => {
+                    const quantityInput = row.querySelector('.item-quantity');
+                    const unitPriceInput = row.querySelector('.item-unit-price');
+                    const amountInput = row.querySelector('.item-amount');
+
+                    const quantity = parseFloat(quantityInput.value) || 0;
+                    const unitPrice = parseFloat(unitPriceInput.value) || 0;
+
+                    const amount = quantity * unitPrice;
+                    amountInput.value = amount.toFixed(2); // Display with 2 decimal places
+
+                    totalAmount += amount;
+                });
+
+                amountDueSpan.textContent = totalAmount.toFixed(2);
+                amountOwedSpan.textContent = totalAmount.toFixed(2); // Assuming挂账 = 应收
+            }
+
+            // Function to create a new row HTML
+            function createNewRow() {
+                const newRow = document.createElement('tr');
+                newRow.classList.add('item-row');
+                newRow.innerHTML = `
+                    <td><input type="text" class="item-name" value="吊龙伴"></td>
+                    <td><input type="number" class="item-quantity" value="0" min="0"></td>
+                    <td><input type="number" class="item-unit-price" value="0" min="0"></td>
+                    <td><input type="number" class="item-amount" value="0.00" readonly></td>
+                    <td><button type="button" class="delete-row-button">&times;</button></td>
+                `;
+                return newRow;
+            }
+
+            // Function to add a row to the table
+            function addRow() {
+                const newRow = createNewRow();
+                itemsTableBody.appendChild(newRow);
+                bindRowEvents(newRow); // Bind events to the new row
+                updateAmounts(); // Update total after adding a row (with default values)
+            }
+
+            // Function to delete a row
+            function deleteRow(button) {
+                const row = button.closest('.item-row');
+                if (itemsTableBody.querySelectorAll('.item-row').length > 1) {
+                    row.remove();
+                    updateAmounts();
+                } else {
+                    alert('至少保留一行品项数据！');
+                }
+            }
+
+            // Function to bind event listeners to a specific row
+            function bindRowEvents(row) {
+                const quantityInput = row.querySelector('.item-quantity');
+                const unitPriceInput = row.querySelector('.item-unit-price');
+                const deleteButton = row.querySelector('.delete-row-button');
+
+                // Bind amount update to quantity and unit price changes
+                if (quantityInput) quantityInput.addEventListener('input', updateAmounts);
+                if (unitPriceInput) unitPriceInput.addEventListener('input', updateAmounts);
+
+                // Bind delete function to the delete button
+                if (deleteButton) deleteButton.addEventListener('click', (e) => deleteRow(e.target));
+            }
+
+
+            // --- Initialization ---
+
+            // 1. Bind event listeners to the existing rows
+            itemsTableBody.querySelectorAll('.item-row').forEach(bindRowEvents);
+
+            // 2. Bind event listener to the "Add Row" button
+            addRowButton.addEventListener('click', addRow);
+
+            // 3. Initial calculation when the page loads
+            updateAmounts();
+        });
+        /* JavaScript ends here */
+    </script>
+</body>
+</html>
