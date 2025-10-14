@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -250,7 +251,8 @@
                         <th>数量(斤)</th>
                         <th>单价</th>
                         <th>金额</th>
-                        <th>操作</th> </tr>
+                        <th>操作</th>
+                    </tr>
                 </thead>
                 <tbody>
                     <tr class="item-row">
@@ -300,6 +302,14 @@
             const amountDueSpan = document.getElementById('amountDue');
             const amountOwedSpan = document.getElementById('amountOwed');
 
+            // 定义品项及其价格顺序
+            const itemTemplates = [
+                { name: '顶级雪花', price: 175, quantity: 5 }, // 默认第一行已存在，但保留以供参考或创建新行
+                { name: '吊龙伴', price: 95, quantity: 1 },
+                { name: '胸口油', price: 85, quantity: 1 },
+				{ name: '五花趾', price: 110, quantity: 1 },
+				{ name: '牛筋丸浆', price: 40, quantity: 1 }
+            ];
 
             // Calculate tomorrow's date
             const today = new Date();
@@ -339,15 +349,34 @@
                 amountOwedSpan.textContent = totalAmount.toFixed(2); // Assuming挂账 = 应收
             }
 
+            // Function to determine which item to add next
+            function getNextItemToAdd() {
+                const existingItemNames = Array.from(itemsTableBody.querySelectorAll('.item-name')).map(input => input.value.trim());
+                
+                // 找到第一个未被添加的品项模板
+                for (const template of itemTemplates) {
+                    if (!existingItemNames.includes(template.name)) {
+                        return template;
+                    }
+                }
+                
+                // 如果所有预设品项都已存在，返回空模板
+                return { name: '', price: 0, quantity: 0 };
+            }
+
             // Function to create a new row HTML
-            function createNewRow() {
+            function createNewRow(itemData) {
                 const newRow = document.createElement('tr');
                 newRow.classList.add('item-row');
+                
+                // 计算新增行的初始金额 (如果quantity > 0)
+                const initialAmount = (itemData.quantity * itemData.price).toFixed(2);
+
                 newRow.innerHTML = `
-                    <td><input type="text" class="item-name" value="吊龙伴"></td>
-                    <td><input type="number" class="item-quantity" value="0" min="0"></td>
-                    <td><input type="number" class="item-unit-price" value="0" min="0"></td>
-                    <td><input type="number" class="item-amount" value="0.00" readonly></td>
+                    <td><input type="text" class="item-name" value="${itemData.name}"></td>
+                    <td><input type="number" class="item-quantity" value="${itemData.quantity}" min="0"></td>
+                    <td><input type="number" class="item-unit-price" value="${itemData.price}" min="0"></td>
+                    <td><input type="number" class="item-amount" value="${initialAmount}" readonly></td>
                     <td><button type="button" class="delete-row-button">&times;</button></td>
                 `;
                 return newRow;
@@ -355,10 +384,23 @@
 
             // Function to add a row to the table
             function addRow() {
-                const newRow = createNewRow();
+                const nextItem = getNextItemToAdd();
+                // 如果是手动添加，quantity设为1或0，这里统一设为0，让用户输入
+                const defaultQuantity = nextItem.name ? nextItem.quantity : 0; 
+                
+                const itemData = {
+                    name: nextItem.name,
+                    price: nextItem.price,
+                    quantity: defaultQuantity
+                };
+
+                const newRow = createNewRow(itemData);
                 itemsTableBody.appendChild(newRow);
                 bindRowEvents(newRow); // Bind events to the new row
-                updateAmounts(); // Update total after adding a row (with default values)
+                updateAmounts(); // Update total after adding a row
+                
+                // 如果是新添加的行，自动聚焦到品名输入框，方便用户修改或继续添加
+                newRow.querySelector('.item-name').focus();
             }
 
             // Function to delete a row
@@ -382,20 +424,32 @@
                 if (quantityInput) quantityInput.addEventListener('input', updateAmounts);
                 if (unitPriceInput) unitPriceInput.addEventListener('input', updateAmounts);
 
-                // Bind delete function to the delete button
+                // 绑定删除按钮事件
                 if (deleteButton) deleteButton.addEventListener('click', (e) => deleteRow(e.target));
+                
+                // 绑定品名输入框的 change/blur 事件，如果用户手动修改了品名，可以尝试根据品名查找价格，但这里我们只做自动填充，
+                // 手动修改后，价格仍由用户控制。
             }
 
 
             // --- Initialization ---
-
-            // 1. Bind event listeners to the existing rows
-            itemsTableBody.querySelectorAll('.item-row').forEach(bindRowEvents);
-
-            // 2. Bind event listener to the "Add Row" button
+            
+            // 确保第一行的初始值正确绑定
+            const firstRow = itemsTableBody.querySelector('.item-row');
+            if (firstRow) {
+                // 由于模板中的quantity是5，这里我们确保初始计算是基于这个值
+                const defaultItem = itemTemplates[0];
+                firstRow.querySelector('.item-name').value = defaultItem.name;
+                firstRow.querySelector('.item-quantity').value = defaultItem.quantity;
+                firstRow.querySelector('.item-unit-price').value = defaultItem.price;
+                
+                bindRowEvents(firstRow);
+            }
+            
+            // 2. 绑定 "Add Row" 按钮事件
             addRowButton.addEventListener('click', addRow);
 
-            // 3. Initial calculation when the page loads
+            // 3. 页面加载时的初始计算
             updateAmounts();
         });
         /* JavaScript ends here */
